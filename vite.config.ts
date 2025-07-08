@@ -16,6 +16,13 @@ export default defineConfig((config) => {
     build: {
       target: 'esnext',
     },
+    server: {
+      host: process.env.REPLIT_ENVIRONMENT ? '0.0.0.0' : 'localhost',
+      port: process.env.REPLIT_ENVIRONMENT ? 5000 : undefined,
+      hmr: {
+        port: process.env.REPLIT_ENVIRONMENT ? 5001 : undefined,
+      },
+    },
     plugins: [
       nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
@@ -40,7 +47,7 @@ export default defineConfig((config) => {
           return null;
         },
       },
-      config.mode !== 'test' && remixCloudflareDevProxy(),
+      config.mode !== 'test' && !process.env.REPLIT_ENVIRONMENT && remixCloudflareDevProxy(),
       remixVitePlugin({
         future: {
           v3_fetcherPersist: true,
