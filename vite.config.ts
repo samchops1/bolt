@@ -24,10 +24,32 @@ export default defineConfig((config) => {
       },
       watch: process.env.REPLIT_ENVIRONMENT ? {
         usePolling: true,
-        interval: 1000,
-        ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/.cache/**', '**/.local/**']
+        interval: 2000,
+        ignored: [
+          '**/node_modules/**', 
+          '**/.git/**', 
+          '**/dist/**', 
+          '**/build/**', 
+          '**/.cache/**', 
+          '**/.local/**',
+          '**/pnpm-lock.yaml',
+          '**/.pnpm/**',
+          '**/package-lock.json',
+          '**/yarn.lock',
+          '**/.husky/**',
+          '**/.github/**',
+          '**/docs/**',
+          '**/electron/**',
+          '**/functions/**',
+          '**/public/icons/**',
+          '**/assets/**'
+        ]
       } : undefined,
     },
+    optimizeDeps: process.env.REPLIT_ENVIRONMENT ? {
+      exclude: ['@webcontainer/api'],
+      include: ['buffer', 'process']
+    } : undefined,
     plugins: [
       nodePolyfills({
         include: ['buffer', 'process', 'util', 'stream'],
