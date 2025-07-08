@@ -1,5 +1,5 @@
-appId: com.stackblitz.bolt.diy
-productName: Bolt Local
+appId: com.stackblitz.makethis.dev
+productName: MakeThis.Dev Local
 directories:
   buildResources: build
   output: dist
@@ -57,7 +57,7 @@ npmRebuild: false
 publish:
   provider: github
   owner: Derek-X-Wang
-  repo: bolt.local
+  repo: makethis.dev.local
   private: true
   releaseType: release
 
