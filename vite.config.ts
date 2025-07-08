@@ -22,6 +22,11 @@ export default defineConfig((config) => {
       hmr: {
         port: process.env.REPLIT_ENVIRONMENT ? 5001 : undefined,
       },
+      watch: process.env.REPLIT_ENVIRONMENT ? {
+        usePolling: true,
+        interval: 1000,
+        ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/.cache/**', '**/.local/**']
+      } : undefined,
     },
     plugins: [
       nodePolyfills({
