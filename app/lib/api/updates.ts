@@ -56,11 +56,16 @@ export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
      * Using raw.githubusercontent.com which doesn't require authentication
      */
     const latestPackageResponse = await fetch(
-      'https://raw.githubusercontent.com/stackblitz-labs/makethis.dev/main/package.json',
+      'https://raw.githubusercontent.com/samchops1/bolt/main/package.json',
     );
 
     if (!latestPackageResponse.ok) {
-      throw new Error(`Failed to fetch latest package.json: ${latestPackageResponse.status}`);
+      // If the new repository doesn't exist yet, return no update available
+      return {
+        available: false,
+        version: currentVersion,
+        releaseNotes: undefined,
+      };
     }
 
     const latestPackageData = (await latestPackageResponse.json()) as PackageJson;
