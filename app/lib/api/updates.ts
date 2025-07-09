@@ -35,90 +35,28 @@ function compareVersions(v1: string, v2: string): number {
 }
 
 export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
-  // Check if update checks should be skipped
-  if (typeof localStorage !== 'undefined') {
-    const skipUpdates = localStorage.getItem('skip_update_checks');
-    if (skipUpdates === 'true') {
-      console.log('Update checks skipped by user preference');
-      return {
-        available: false,
-        version: 'unknown',
-        releaseNotes: 'Update checks disabled',
-      };
-    }
-  }
-
+  // Always return no update available to prevent blocking the app
+  console.log('Update checks disabled to prevent app blocking');
+  
+  // Try to get current version for display purposes only
+  let currentVersion = '1.0.0';
   try {
-    // Get the current version from local package.json with timeout
-    const packageResponse = await Promise.race([
-      fetch('/package.json'),
-      new Promise<Response>((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
-      )
-    ]);
-
-    if (!packageResponse.ok) {
-      throw new Error('Failed to fetch local package.json');
+    const packageResponse = await fetch('/package.json');
+    if (packageResponse.ok) {
+      const packageData = (await packageResponse.json()) as PackageJson;
+      if (packageData.version && typeof packageData.version === 'string') {
+        currentVersion = packageData.version;
+      }
     }
-
-    const packageData = (await packageResponse.json()) as PackageJson;
-
-    if (!packageData.version || typeof packageData.version !== 'string') {
-      throw new Error('Invalid package.json format: missing or invalid version');
-    }
-
-    const currentVersion = packageData.version;
-
-    /*
-     * Get the latest version from GitHub's main branch package.json
-     * Using raw.githubusercontent.com which doesn't require authentication
-     * With timeout to prevent hanging
-     */
-    const latestPackageResponse = await Promise.race([
-      fetch('https://raw.githubusercontent.com/samchops1/bolt/main/package.json'),
-      new Promise<Response>((_, reject) => 
-        setTimeout(() => reject(new Error('GitHub request timeout')), 5000)
-      )
-    ]);
-
-    if (!latestPackageResponse.ok) {
-      // If the new repository doesn't exist yet, return no update available
-      return {
-        available: false,
-        version: currentVersion,
-        releaseNotes: undefined,
-      };
-    }
-
-    const latestPackageData = (await latestPackageResponse.json()) as PackageJson;
-
-    if (!latestPackageData.version || typeof latestPackageData.version !== 'string') {
-      throw new Error('Invalid remote package.json format: missing or invalid version');
-    }
-
-    const latestVersion = latestPackageData.version;
-
-    // Compare versions semantically
-    const hasUpdate = compareVersions(latestVersion, currentVersion) > 0;
-
-    return {
-      available: hasUpdate,
-      version: latestVersion,
-      releaseNotes: hasUpdate ? 'Update available. Check GitHub for release notes.' : undefined,
-    };
   } catch (error) {
-    console.warn('Update check failed, continuing without updates:', error);
-
-    // Always return a safe fallback to prevent app from hanging
-    return {
-      available: false,
-      version: 'unknown',
-      error: {
-        type: 'network',
-        message: 'Update check skipped due to network issues',
-      },
-    };
+    console.log('Could not fetch version, using default');
   }
+
+  return {
+    available: false,
+    version: currentVersion,
+    releaseNotes: undefined,
+  };
 };
 
 export const acknowledgeUpdate = async (version: string): Promise<void> => {
