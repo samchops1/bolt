@@ -37,7 +37,7 @@ function compareVersions(v1: string, v2: string): number {
 export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
   // Always return no update available to prevent blocking the app
   console.log('Update checks disabled to prevent app blocking');
-  
+
   // Try to get current version for display purposes only
   let currentVersion = '1.0.0';
   try {

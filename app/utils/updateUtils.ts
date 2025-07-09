@@ -1,4 +1,3 @@
-
 export const skipUpdateChecks = () => {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('skip_update_checks', 'true');
@@ -19,3 +18,23 @@ export const isUpdateCheckSkipped = (): boolean => {
   }
   return false;
 };
+
+export function shouldCheckForUpdates(): boolean {
+  // Don't check for updates in development
+  if (import.meta.env.DEV) {
+    return false;
+  }
+
+  // Don't check for updates in Replit environment
+  if (process.env.REPLIT_ENVIRONMENT === 'true') {
+    return false;
+  }
+
+  // Check if auto-updates are disabled
+  const autoUpdatesDisabled = localStorage.getItem('autoUpdatesDisabled') === 'true';
+  if (autoUpdatesDisabled) {
+    return false;
+  }
+
+  return true;
+}

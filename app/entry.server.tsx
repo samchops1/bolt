@@ -1,3 +1,13 @@
+import { PassThrough } from 'node:stream';
+
+import type { AppLoadContext, EntryContext } from '@remix-run/cloudflare';
+import { createReadableStreamFromReadable } from '@remix-run/node';
+import { RemixServer } from '@remix-run/react';
+import { isbot } from 'isbot';
+import { renderToPipeableStream } from 'react-dom/server';
+
+// Validate environment on server start
+import '~/utils/environmentCheck';
 import type { AppLoadContext } from '@remix-run/cloudflare';
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
