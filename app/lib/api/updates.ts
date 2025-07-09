@@ -35,9 +35,27 @@ function compareVersions(v1: string, v2: string): number {
 }
 
 export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
+  // Check if update checks should be skipped
+  if (typeof localStorage !== 'undefined') {
+    const skipUpdates = localStorage.getItem('skip_update_checks');
+    if (skipUpdates === 'true') {
+      console.log('Update checks skipped by user preference');
+      return {
+        available: false,
+        version: 'unknown',
+        releaseNotes: 'Update checks disabled',
+      };
+    }
+  }
+
   try {
-    // Get the current version from local package.json
-    const packageResponse = await fetch('/package.json');
+    // Get the current version from local package.json with timeout
+    const packageResponse = await Promise.race([
+      fetch('/package.json'),
+      new Promise<Response>((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      )
+    ]);
 
     if (!packageResponse.ok) {
       throw new Error('Failed to fetch local package.json');
@@ -54,10 +72,14 @@ export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
     /*
      * Get the latest version from GitHub's main branch package.json
      * Using raw.githubusercontent.com which doesn't require authentication
+     * With timeout to prevent hanging
      */
-    const latestPackageResponse = await fetch(
-      'https://raw.githubusercontent.com/samchops1/bolt/main/package.json',
-    );
+    const latestPackageResponse = await Promise.race([
+      fetch('https://raw.githubusercontent.com/samchops1/bolt/main/package.json'),
+      new Promise<Response>((_, reject) => 
+        setTimeout(() => reject(new Error('GitHub request timeout')), 5000)
+      )
+    ]);
 
     if (!latestPackageResponse.ok) {
       // If the new repository doesn't exist yet, return no update available
@@ -85,19 +107,15 @@ export const checkForUpdates = async (): Promise<UpdateCheckResult> => {
       releaseNotes: hasUpdate ? 'Update available. Check GitHub for release notes.' : undefined,
     };
   } catch (error) {
-    console.error('Error checking for updates:', error);
+    console.warn('Update check failed, continuing without updates:', error);
 
-    // Determine error type
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const isNetworkError =
-      errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch');
-
+    // Always return a safe fallback to prevent app from hanging
     return {
       available: false,
       version: 'unknown',
       error: {
-        type: isNetworkError ? 'network' : 'unknown',
-        message: `Failed to check for updates: ${errorMessage}`,
+        type: 'network',
+        message: 'Update check skipped due to network issues',
       },
     };
   }

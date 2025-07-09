@@ -11,6 +11,12 @@ import { isDev } from './constants';
 const autoUpdater: AppUpdater = (electronUpdater as any).default.autoUpdater;
 
 export async function setupAutoUpdater() {
+  // Skip auto-updater setup in development or if updates are disabled
+  if (isDev || process.env.SKIP_AUTO_UPDATE === 'true') {
+    logger.info('Auto-updater skipped (dev mode or disabled)');
+    return;
+  }
+
   // Configure logger
   logger.transports.file.level = 'debug';
   autoUpdater.logger = logger;
@@ -82,19 +88,31 @@ export async function setupAutoUpdater() {
     }
   });
 
-  // Check for updates
+  // Check for updates with timeout
   try {
     logger.info('Checking for updates. Current version:', app.getVersion());
-    await autoUpdater.checkForUpdates();
+    
+    // Add timeout to prevent hanging
+    const updateCheckPromise = autoUpdater.checkForUpdates();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Update check timeout')), 10000);
+    });
+    
+    await Promise.race([updateCheckPromise, timeoutPromise]);
   } catch (err) {
-    logger.error('Failed to check for updates:', err);
+    logger.warn('Update check failed, continuing without updates:', err);
   }
 
-  // Set up periodic update checks (every 4 hours)
+  // Set up periodic update checks (every 4 hours) with error handling
   setInterval(
     () => {
-      autoUpdater.checkForUpdates().catch((err) => {
-        logger.error('Periodic update check failed:', err);
+      const updateCheckPromise = autoUpdater.checkForUpdates();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Periodic update check timeout')), 10000);
+      });
+      
+      Promise.race([updateCheckPromise, timeoutPromise]).catch((err) => {
+        logger.warn('Periodic update check failed:', err);
       });
     },
     4 * 60 * 60 * 1000,
