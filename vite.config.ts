@@ -110,7 +110,8 @@ function chrome129IssuePlugin() {
     name: 'chrome129IssuePlugin',
     configureServer(server: ViteDevServer) {
       server.middlewares.use((req, res, next) => {
-        const raw = req.headers['user-agent']?.match(/Chrom(e|ium)\/([0-9]+)\./);
+        const userAgent = req.headers['user-agent'] || '';
+        const raw = userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
 
         if (raw) {
           const version = parseInt(raw[2], 10);
@@ -118,7 +119,18 @@ function chrome129IssuePlugin() {
           if (version === 129) {
             res.setHeader('content-type', 'text/html');
             res.end(
-              '<body><h1>Please use Chrome Canary for testing.</h1><p>Chrome 129 has an issue with JavaScript modules & Vite local development, see <a href="https://github.com/stackblitz/bolt.new/issues/86#issuecomment-2395519258">for more information.</a></p><p><b>Note:</b> This only impacts <u>local development</u>. `pnpm run build` and `pnpm run start` will work fine in this browser.</p></body>',
+              `<body style="font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px;">
+                <h1 style="color: #e74c3c;">Browser Compatibility Issue</h1>
+                <p>Chrome 129 has known issues with JavaScript modules & Vite local development.</p>
+                <h2>Solutions:</h2>
+                <ul>
+                  <li><strong>Recommended:</strong> Use Chrome Canary, Firefox, or Safari for development</li>
+                  <li>Or wait for Chrome 130+ which fixes this issue</li>
+                  <li>Or use the production build: <code>npm run build && npm run start</code></li>
+                </ul>
+                <p>For more information, see <a href="https://github.com/stackblitz/bolt.new/issues/86#issuecomment-2395519258">this GitHub issue</a>.</p>
+                <p><b>Note:</b> This only impacts local development. Production builds work fine in this browser.</p>
+              </body>`,
             );
 
             return;

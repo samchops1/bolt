@@ -28,6 +28,15 @@ mode = "sequential"
 task = "shell.exec"
 args = "export CHOKIDAR_USEPOLLING=true && export CHOKIDAR_INTERVAL=2000 && REPLIT_ENVIRONMENT=true npm run dev"
 
+[[workflows.workflow]]
+name = "Production Mode"
+author = 42905820
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build && npm run start"
+
 [[ports]]
 localPort = 5000
 externalPort = 5000
